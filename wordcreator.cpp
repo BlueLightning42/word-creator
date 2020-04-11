@@ -120,14 +120,16 @@ std::string WordCreator::make(const char* expression) {
 		}else { //open
 			if (expression[i] == '|') {
 				temp.emplace_back("");
-				auto start = i++;
+				auto start = ++i;
 				while (expression[i] != '|' && expression[i] != '\0') {
 					i++;
 				}
 				try {
+					auto extracted = std::string(expression, start, i - start);
 					int weight = std::stoi(std::string(expression, start, i - start));
 					weights.push_back(weight);
 				}catch(...){
+
 					weights.push_back(-1);
 				}
 			}
@@ -137,7 +139,7 @@ std::string WordCreator::make(const char* expression) {
 			}
 			else if (expression[i] == '}') {
 				closed = true;
-				std::string value = choice(temp);
+				std::string value = choice_weighted(temp, weights);
 				if (value != "") {
 					output += choice(loadKey(value.c_str()));
 				}
@@ -165,7 +167,6 @@ std::string WordCreator::choice_weighted(str_vec vec, std::vector<int> weights) 
 	static std::mt19937 gen(rd());
 	if (vec.size() < 1) return "";
 	if (vec.size() == 1) return vec.back();
-	//fmt::print("v{} w{}\n", vec.size(), weights.size());
 	int percent = 100;
 	int empty = 0;
 	for (const auto& w : weights) {
@@ -178,7 +179,6 @@ std::string WordCreator::choice_weighted(str_vec vec, std::vector<int> weights) 
 	percent /= empty;
 	for (auto& w : weights) {
 		if (w == -1) w = percent;
-		//fmt::print("{} ", w);
 	}
 	std::discrete_distribution<> dis(weights.begin(), weights.end());
 	return vec[dis(gen)];
